@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	HeaderEncodedLen = 6
-	PixelEncodedLen  = 5
+	HeaderPreambleVal = 0xAA
+	HeaderEncodedLen  = 10
+	PixelEncodedLen   = 5
 )
 
 const (
@@ -16,9 +17,10 @@ const (
 )
 
 var (
-	ErrEncHeaderLen  = errors.New("invalid length for encoded header")
-	ErrEncMessageLen = errors.New("invalid length for encoded message")
-	ErrEncPixelLen   = errors.New("invalid length for encoded pixel")
+	ErrEncHeaderLen     = errors.New("invalid length for encoded header")
+	ErrChecksumMismatch = errors.New("invalid checksum")
+	ErrEncMessageLen    = errors.New("invalid length for encoded message")
+	ErrEncPixelLen      = errors.New("invalid length for encoded pixel")
 )
 
 type Message interface {
@@ -36,19 +38,39 @@ type Header struct {
 }
 
 func (h *Header) EncodeHeader() []byte {
+	data := []byte{
+		HeaderPreambleVal,
+		HeaderPreambleVal,
+		HeaderPreambleVal,
+		h.SourceId,
+		0x00,
+		h.Type,
+		0x00,
+	}
 	dl := make([]byte, 2)
 	binary.BigEndian.PutUint16(dl, h.DataLen)
-	data := []byte{h.SourceId, 0x00, h.Type, 0x00}
-	return append(data, dl...)
+	data = append(data, dl...)
+	var checksum byte
+	for _, v := range data {
+		checksum ^= v
+	}
+	return append(data, checksum)
 }
 
 func (h *Header) DecodeHeader(data []byte) error {
 	if len(data) != HeaderEncodedLen {
 		return ErrEncHeaderLen
 	}
-	h.SourceId = data[0]
-	h.Type = data[2]
-	h.DataLen = binary.BigEndian.Uint16(data[4:6])
+	var checksum byte
+	for i := 0; i < HeaderEncodedLen-1; i++ {
+		checksum ^= data[i]
+	}
+	if checksum != data[len(data)-1] {
+		return ErrChecksumMismatch
+	}
+	h.SourceId = data[3]
+	h.Type = data[5]
+	h.DataLen = binary.BigEndian.Uint16(data[7:9])
 	return nil
 }
 

@@ -1,0 +1,8 @@
+from rulib import Config
+
+c = Config(
+    unicorn_type=Config.UnicornType.GALACTIC,
+    wifi_ssid='MYWIFI',
+    wifi_psk='MYSUPERSECRETPPSK',
+    wifi_country='DE'
+)

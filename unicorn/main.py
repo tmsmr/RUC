@@ -22,13 +22,14 @@ server = Server(c)
 info('listening for clients on %s:%d' % (server.addr[0], server.addr[1]))
 
 while True:
-    sock = None
+    sock, addr = server.accept()
+    info('client %s:%d connected' % (addr[0], addr[1]))
+    display.clear()
     try:
-        sock, addr = server.accept()
-        info('client %s:%d connected' % (addr[0], addr[1]))
-        display.clear()
-        warn(Client.handle(sock, display.unicorn))
-        warn('client %s:%d disconnected' % (addr[0], addr[1]))
-        display.clear()
+        Client.handle(sock, display.unicorn)
+    except RuntimeError as e:
+        warn(e)
     finally:
         sock.close()
+    warn('client %s:%d disconnected' % (addr[0], addr[1]))
+    display.clear()

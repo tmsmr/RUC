@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/tmsmr/ruc"
 	"math/rand"
+	"os"
 	"time"
 )
 
@@ -15,16 +16,26 @@ type ball struct {
 
 func randBall(mx, my int) ball {
 	return ball{
-		x: rand.Float64() * float64(mx), y: rand.Float64() * float64(my),
-		d:  rand.Float64() * 8,
-		vx: rand.Float64(), vy: rand.Float64(),
+		x: float64(mx / 2), y: float64(my / 2),
+		d:  float64(rand.Intn((my/2)-2) + 2),
+		vx: float64(rand.Intn(mx-10)+10) / float64(mx), vy: float64(rand.Intn(mx-10)+10) / float64(mx),
 		r: rand.Float64(), g: rand.Float64(), b: rand.Float64(),
 	}
 }
 
+var addr string
+
+func init() {
+	if len(os.Getenv("UNICORN_ADDR")) != 0 {
+		addr = os.Getenv("UNICORN_ADDR")
+	} else {
+		// emulator
+		addr = os.Getenv("localhost:1234")
+	}
+}
+
 func main() {
-	// connect to the emulator
-	client, err := ruc.NewClient("localhost:1234")
+	client, err := ruc.NewClient(addr)
 	if err != nil {
 		panic(err)
 	}
@@ -40,6 +51,8 @@ func main() {
 		randBall(c.Width(), c.Height()),
 		randBall(c.Width(), c.Height()),
 		randBall(c.Width(), c.Height()),
+		randBall(c.Width(), c.Height()),
+		randBall(c.Width(), c.Height()),
 	}
 
 	c.SetRGB(0, 0, 0)
@@ -50,9 +63,10 @@ func main() {
 	}
 
 	for {
+		start := time.Now()
 		c.SetRGB(0, 0, 0)
 		c.Clear()
-		for i, _ := range balls {
+		for i := range balls {
 			// apply vx to x
 			if balls[i].x+balls[i].d/2 > float64(c.Width()) || balls[i].x-balls[i].d/2 < 0 {
 				balls[i].vx = -balls[i].vx
@@ -68,10 +82,10 @@ func main() {
 			c.DrawCircle(balls[i].x, balls[i].y, balls[i].d/2)
 			c.Fill()
 		}
-		client.Display(c, false)
+		err := client.Display(c, false)
 		if err != nil {
 			panic(err)
 		}
-		time.Sleep(time.Second / 30)
+		time.Sleep((time.Second / 30) - time.Since(start))
 	}
 }

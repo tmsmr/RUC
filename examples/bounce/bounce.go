@@ -7,7 +7,10 @@ import (
 	"time"
 )
 
-const TargetFps = 30
+const (
+	NrBalls   = 20
+	TargetFps = 30
+)
 
 type ball struct {
 	x, y    float64
@@ -49,12 +52,9 @@ func main() {
 	// galactic unicorn
 	c := ruc.NewCanvas(53, 11)
 
-	balls := []ball{
-		randBall(c.Width(), c.Height()),
-		randBall(c.Width(), c.Height()),
-		randBall(c.Width(), c.Height()),
-		randBall(c.Width(), c.Height()),
-		randBall(c.Width(), c.Height()),
+	balls := make([]ball, NrBalls)
+	for i := 0; i < NrBalls; i++ {
+		balls[i] = randBall(c.Width(), c.Height())
 	}
 
 	c.SetRGB(0, 0, 0)

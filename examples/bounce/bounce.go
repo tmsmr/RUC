@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+const TargetFps = 30
+
 type ball struct {
 	x, y    float64
 	d       float64
@@ -86,6 +88,6 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		time.Sleep((time.Second / 30) - time.Since(start))
+		time.Sleep((time.Second / TargetFps) - time.Since(start))
 	}
 }
